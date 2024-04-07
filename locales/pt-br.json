@@ -1,0 +1,87 @@
+{
+    "error": {
+        "canceled": "Cancelado",
+        "impossible": "Ação Impossível...",
+        "no_player": "Nenhum Jogador Próximo",
+        "no_firstaid": "Você precisa de um Kit de Primeiros Socorros",
+        "no_bandage": "Você precisa de um Curativo",
+        "beds_taken": "Camas estão ocupadas...",
+        "possessions_taken": "Todos os seus pertences foram retirados...",
+        "cant_help": "Você não pode ajudar esta pessoa...",
+        "not_ems": "Você não é um EMS ou não está logado"
+    },
+    "success": {
+        "revived": "Você reviveu uma pessoa",
+        "healthy_player": "O Jogador está Saudável",
+        "helped_player": "Você ajudou a pessoa",
+        "being_helped": "Você está sendo ajudado..."
+    },
+    "info": {
+        "civ_died": "Civil Faleceu",
+        "civ_down": "Civil Ferido",
+        "civ_call": "Chamada Civil",
+        "ems_down": "Doutor %s Ferido",
+        "respawn_txt": "RESPAWN EM: ~r~%s~s~ SEGUNDOS",
+        "respawn_revive": "SEGURE [~r~E~s~] POR %s SEGUNDOS PARA RESPAWN POR $~r~%s~s~",
+        "bleed_out": "VOCÊ SANGRARÁ ATÉ A MORTE EM: ~r~%s~s~ SEGUNDOS",
+        "bleed_out_help": "VOCÊ SANGRARÁ ATÉ A MORTE EM: ~r~%s~s~ SEGUNDOS, VOCÊ PODE SER AJUDADO",
+        "request_help": "PRESSIONE [~r~G~s~] PARA SOLICITAR AJUDA",
+        "help_requested": "PESSOAL DO EMS FOI NOTIFICADO",
+        "amb_plate": "AMBU",
+        "heli_plate": "VIDA",
+        "status": "Verificação de Status",
+        "is_status": "Está %s",
+        "healthy": "Você está completamente saudável novamente!",
+        "safe": "Hospital Seguro",
+        "ems_alert": "Alerta EMS - %s",
+        "mr": "Sr.",
+        "mrs": "Sra.",
+        "dr_needed": "Um médico é necessário no Hospital Pillbox",
+        "dr_alert": "O médico já foi notificado",
+        "ems_report": "Relatório EMS",
+        "message_sent": "Mensagem a ser enviada",
+        "check_health": "Verificar a Saúde de um Jogador",
+        "heal_player": "Curar um Jogador",
+        "revive_player": "Reviver um Jogador"
+    },
+    "mail": {
+        "sender": "Hospital Pillbox",
+        "subject": "Custos Hospitalares",
+        "message": "Prezado(a) %s %s, <br /><br />Por meio deste e-mail, você recebeu os custos da última visita ao hospital.<br />Os custos finais ficaram em: <strong>$%s</strong><br /><br />Desejamos a você uma rápida recuperação!"
+    },
+    "menu": {
+        "amb_vehicles": "Veículos de Ambulância",
+        "status": "Status de Saúde"
+    },
+    "text": {
+        "pstash_button": "[E] - Esconderijo Pessoal",
+        "pstash": "Esconderijo Pessoal",
+        "onduty_button": "[E] - Ficar de Serviço",
+        "offduty_button": "[E] - Sair de Serviço",
+        "duty": "De Serviço/Fora de Serviço",
+        "armory_button": "[E] - Armaria",
+        "armory": "Armaria",
+        "veh_button": "[E] - Pegar / Guardar Veículo",
+        "elevator_roof": "[E] - Pegar o elevador até o telhado",
+        "elevator_main": "[E] - Pegar o elevador para baixo",
+        "el_roof": "Pegar o elevador até o telhado",
+        "el_main": "Pegar o elevador para o andar principal",
+        "call_doc": "[E] - Chamar médico",
+        "call": "Chamar",
+        "check_in": "[E] Fazer Check-in",
+        "check": "Check-in",
+        "lie_bed": "[E] - Deitar na cama",
+        "bed": "Deitar na cama",
+        "put_bed": "Colocar cidadão na cama",
+        "bed_out": "[E] - Para sair da cama..",
+        "alert": "Alerta!"
+    },
+    "progress": {
+        "ifaks": "Pegando ifaks...",
+        "bandage": "Usando Curativo...",
+        "painkillers": "Tomando Analgésicos...",
+        "revive": "Revivendo Pessoa...",
+        "healing": "Curando Ferimentos...",
+        "checking_in": "Fazendo Check-in..."
+    }
+}
