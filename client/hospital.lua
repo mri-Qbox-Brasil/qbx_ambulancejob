@@ -26,9 +26,7 @@ local function setBedCam()
     Wait(500)
     FreezeEntityPosition(cache.ped, true)
 
-    lib.requestAnimDict(InBedDict)
-
-    TaskPlayAnim(cache.ped, InBedDict, InBedAnim, 8.0, 1.0, -1, 1, 0, false, false, false)
+    lib.playAnim(cache.ped, InBedDict, InBedAnim, 8.0, 1.0, -1, 1, 0, false, false, false)
     SetEntityHeading(cache.ped, bedOccupyingData.coords.w)
 
     cam = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
@@ -49,7 +47,7 @@ end
 local function putPlayerInBed(hospitalName, bedIndex, isRevive, skipOpenCheck)
     if IsInHospitalBed then return end
     if not skipOpenCheck then
-        if lib.callback.await('qbx_ambulancejob:server:isBedTaken', false, hospitalName, bedIndex) then
+        if not lib.callback.await('qbx_ambulancejob:server:claimBed', false, hospitalName, bedIndex) then
             exports.qbx_core:Notify(locale('error.beds_taken'), 'error')
             return
         end
@@ -60,7 +58,7 @@ local function putPlayerInBed(hospitalName, bedIndex, isRevive, skipOpenCheck)
     bedOccupyingData = sharedConfig.locations.hospitals[hospitalName].beds[bedIndex]
     IsInHospitalBed = true
     exports.qbx_medical:DisableDamageEffects()
-    exports.qbx_medical:disableRespawn()
+    exports.qbx_medical:DisableRespawn()
     CanLeaveBed = false
     setBedCam()
     CreateThread(function()
@@ -68,12 +66,14 @@ local function putPlayerInBed(hospitalName, bedIndex, isRevive, skipOpenCheck)
         if isRevive then
             exports.qbx_core:Notify(locale('success.being_helped'), 'success')
             Wait(config.aiHealTimer * 1000)
-            TriggerEvent('hospital:client:Revive')
+            if lib.callback.await('qbx_ambulancejob:server:completeTreatment') then
+                lib.playAnim(cache.ped, InBedDict, InBedAnim, 8.0, 1.0, -1, 1, 0, false, false, false)
+                CanLeaveBed = true
+            end
         else
             CanLeaveBed = true
         end
     end)
-    TriggerServerEvent('qbx_ambulancejob:server:playerEnteredBed', hospitalName, bedIndex)
 end
 
 RegisterNetEvent('qbx_ambulancejob:client:putPlayerInBed', function(hospitalName, bedIndex)
@@ -118,11 +118,15 @@ local function checkIn(hospitalName)
         }
     })
     then
-        lib.callback('qbx_ambulancejob:server:checkIn', false, nil, cache.serverId, hospitalName)
+        lib.callback.await('qbx_ambulancejob:server:checkIn', false, cache.serverId, hospitalName)
     else
         exports.qbx_core:Notify(locale('error.canceled'), 'error')
     end
 end
+
+RegisterNetEvent('qbx_ambulancejob:client:checkIn', function(hospitalName)
+    checkIn(hospitalName)
+end)
 
 RegisterNetEvent('qbx_ambulancejob:client:checkedIn', function(hospitalName, bedIndex)
     putPlayerInBed(hospitalName, bedIndex, true, true)
@@ -133,23 +137,26 @@ if config.useTarget then
     CreateThread(function()
         for hospitalName, hospital in pairs(sharedConfig.locations.hospitals) do
             if hospital.checkIn then
-                exports.ox_target:addBoxZone({
-                    name = hospitalName..'_checkin',
-                    coords = hospital.checkIn,
-                    size = vec3(2, 1, 2),
-                    rotation = 18,
-                    debug = config.debugPoly,
-                    options = {
-                        {
-                            onSelect = function()
-                                checkIn(hospitalName)
-                            end,
-                            icon = 'fas fa-clipboard',
-                            label = locale('text.check'),
-                            distance = 3.0,
+                if type(hospital.checkIn) ~= 'table' then hospital.checkIn = { hospital.checkIn } end
+                for i = 1, #hospital.checkIn do
+                    exports.ox_target:addBoxZone({
+                        name = hospitalName..'_checkin_'..i,
+                        coords = hospital.checkIn[i],
+                        size = vec3(2, 1, 2),
+                        rotation = 18,
+                        debug = config.debugPoly,
+                        options = {
+                            {
+                                onSelect = function()
+                                    checkIn(hospitalName)
+                                end,
+                                icon = 'fas fa-clipboard',
+                                label = locale('text.check'),
+                                distance = 3.0,
+                            }
                         }
-                    }
-                })
+                    })
+                end
             end
 
             for i = 1, #hospital.beds do
@@ -246,11 +253,12 @@ end
 
 ---Plays animation to get out of bed and resets variables
 local function leaveBed()
-    lib.requestAnimDict('switch@franklin@bed')
+    lib.requestAnimDict('switch@franklin@bed', 10000)
     FreezeEntityPosition(cache.ped, false)
     SetEntityInvincible(cache.ped, false)
     SetEntityHeading(cache.ped, bedOccupyingData.coords.w + 90)
     TaskPlayAnim(cache.ped, 'switch@franklin@bed', 'sleep_getup_rubeyes', 100.0, 1.0, -1, 8, -1, false, false, false)
+    RemoveAnimDict('switch@franklin@bed')
     Wait(4000)
     ClearPedTasks(cache.ped)
     TriggerServerEvent('qbx_ambulancejob:server:playerLeftBed', hospitalOccupying, bedIndexOccupying)
@@ -264,6 +272,7 @@ local function leaveBed()
     bedOccupyingData = nil
     IsInHospitalBed = false
     exports.qbx_medical:EnableDamageEffects()
+    exports.qbx_medical:AllowRespawn()
 
     if QBX.PlayerData.metadata.injail <= 0 then return end
     TriggerEvent('prison:client:Enter', QBX.PlayerData.metadata.injail)
@@ -275,6 +284,9 @@ CreateThread(function()
         if IsInHospitalBed and CanLeaveBed then
             lib.showTextUI(locale('text.bed_out'))
             while IsInHospitalBed and CanLeaveBed do
+                if not IsEntityPlayingAnim(cache.ped, InBedDict, InBedAnim, 3) then
+                    lib.playAnim(cache.ped, InBedDict, InBedAnim, 8.0, 1.0, -1, 1, 0, false, 0, false)
+                end
                 OnKeyPress(leaveBed)
                 Wait(0)
             end

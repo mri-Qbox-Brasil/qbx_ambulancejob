@@ -1,3 +1,4 @@
+-- luacheck: globals DEATH_STATE_STATE_BAG
 local config = require 'config.client'
 local sharedConfig = require 'config.shared'
 local doctorCount = 0
@@ -7,12 +8,12 @@ local function getDoctorCount()
 end
 
 local function displayRespawnText()
-    local deathTime = exports.qbx_medical:getDeathTime()
+    local deathTime = exports.qbx_medical:GetDeathTime()
     if deathTime > 0 and doctorCount > 0 then
         qbx.drawText2d({ text = locale('info.respawn_txt', math.ceil(deathTime)), coords = vec2(1.0, 1.44), scale = 0.6 })
     else
         qbx.drawText2d({
-            text = locale('info.respawn_revive', exports.qbx_medical:getRespawnHoldTimeDeprecated(), sharedConfig.checkInCost),
+            text = locale('info.respawn_revive', exports.qbx_medical:GetRespawnHoldTimeDeprecated(), sharedConfig.checkInCost),
             coords = vec2(1.0, 1.44),
             scale = 0.6
         })
@@ -23,11 +24,10 @@ end
 local function playDeadAnimation(ped)
     if IsInHospitalBed then
         if not IsEntityPlayingAnim(ped, InBedDict, InBedAnim, 3) then
-            lib.requestAnimDict(InBedDict)
-            TaskPlayAnim(ped, InBedDict, InBedAnim, 1.0, 1.0, -1, 1, 0, false, false, false)
+            lib.playAnim(ped, InBedDict, InBedAnim, 1.0, 1.0, -1, 1, 0, false, false, false)
         end
     else
-        exports.qbx_medical:playDeadAnimation()
+        exports.qbx_medical:PlayDeadAnimation()
     end
 end
 
@@ -54,7 +54,7 @@ local function handleRequestingEms()
 end
 
 local function handleLastStand()
-    local laststandTime = exports.qbx_medical:getLaststandTime()
+    local laststandTime = exports.qbx_medical:GetLaststandTime()
     if laststandTime > config.laststandTimer or doctorCount == 0 then
         qbx.drawText2d({ text = locale('info.bleed_out', math.ceil(laststandTime)), coords = vec2(1.0, 1.44), scale = 0.6 })
     else
@@ -63,27 +63,38 @@ local function handleLastStand()
     end
 end
 
----Set dead and last stand states.
-CreateThread(function()
-    while true do
-        local isDead = exports.qbx_medical:isDead()
-        local inLaststand = exports.qbx_medical:getLaststand()
-        if isDead or inLaststand then
-            if isDead then
-                handleDead(cache.ped)
-            elseif inLaststand then
-                handleLastStand()
-            end
-            Wait(0)
-        else
-            Wait(1000)
+local deathStateCfg = require("@qbx_medical.config.shared").deathState
+local deathState = LocalPlayer.state[DEATH_STATE_STATE_BAG] or deathStateCfg.ALIVE
+
+local running = false
+local function stateLoop()
+    if running then return end
+    running = true
+    doctorCount = getDoctorCount()
+    local lastUpdate = GetGameTimer()
+    while deathState == deathStateCfg.LAST_STAND or deathState == deathStateCfg.DEAD do
+        if deathState == deathStateCfg.LAST_STAND then
+            handleLastStand()
         end
+        if deathState == deathStateCfg.DEAD then
+            handleDead(cache.ped)
+        end
+        local currentTime = GetGameTimer()
+        if (currentTime - lastUpdate) > 60000 then
+            doctorCount = getDoctorCount()
+            lastUpdate = currentTime
+        end
+        Wait(0)
+    end
+    running = false
+end
+
+AddStateBagChangeHandler(DEATH_STATE_STATE_BAG, ('player:%s'):format(cache.serverId), function(_, _, value)
+    deathState = value
+    if (value == deathStateCfg.LAST_STAND) or (value == deathStateCfg.DEAD) then
+        CreateThread(stateLoop)
     end
 end)
 
-CreateThread(function()
-    while true do
-        doctorCount = getDoctorCount()
-        Wait(60000)
-    end
-end)
+-- A resource restart does not replay existing state bags.
+CreateThread(stateLoop)

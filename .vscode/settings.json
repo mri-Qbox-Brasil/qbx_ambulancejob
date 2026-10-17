@@ -4,8 +4,10 @@
     "Lua.diagnostics.globals": [
         "lib",
         "cache",
-        "QBX",
         "locale",
-        "qbx"
+        "MySQL",
+        "QBX",
+        "qbx",
+        "DEATH_STATE_STATE_BAG"
     ]
 }
